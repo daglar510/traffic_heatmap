@@ -7,7 +7,7 @@ This app visualizes RTLS or GPS logs (example: Borusan factory vehicles) from si
 
 ## 📊 Demo
 
-![Demo screenshot](demo.png)  
+![Demo screenshot](demo.PNG)  
 *Sample: Visualizing demo tractor GPS data at Borusan factory site.*
 
 ---
@@ -116,7 +116,7 @@ Use cases: internal logistics, AGV tracking, fleet heatmaps, movement analysis, 
 
 ## Screenshot
 
-![Demo screenshot](demo.png)
+![Demo screenshot](demo.PNG)
 
 ---
 
