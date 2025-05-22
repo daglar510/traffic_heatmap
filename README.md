@@ -5,7 +5,14 @@ This app visualizes RTLS or GPS logs (example: Borusan factory vehicles) from si
 
 ---
 
-## 📊 Demo
+## 🚀 Live Demo
+
+ **Try it instantly:**  
+[https://traffic-map-daglar510.streamlit.app/](https://traffic-map-daglar510.streamlit.app/)
+
+---
+
+## 📊 Demo Screenshot
 
 ![Demo screenshot](demo.PNG)  
 *Sample: Visualizing demo tractor GPS data at Borusan factory site.*
@@ -85,54 +92,16 @@ This app visualizes RTLS or GPS logs (example: Borusan factory vehicles) from si
 ```csv
 assetId,assetName,updateDate,Lat,Lon
 57ee4bdc-6018-418a-bbbb-a116b4bb85e6,16MEH31,2025-04-02T23:44:09,40.40727,29.09322
-57ee4bdc-6018-418a-bbbb-a116b4bb85e6,16MEH31,2025-04-02T23:44:05,40.40720,29.09326
 ...
 ```
 
 ---
 
-## Customization
-
-- Use any RTLS or GPS dataset with columns for latitude and longitude.
-- Switch map style by changing the `map_style` in the code.
-- Adjust number of colors or color scale in the code as needed.
-- Supports millions of points out-of-the-box. Increase grid size for performance if needed.
-
----
-
 ## License
 
-MIT License.  
-Fork, adapt, and use for any internal or public project.
+`MIT LICENSE`.
 
 ---
 
-## About
-
-Demo data and sample app built for Borusan Digital Transformation initiatives.  
-Use cases: internal logistics, AGV tracking, fleet heatmaps, movement analysis, IoT asset monitoring, and more.
-
----
-
-## Screenshot
-
-![Demo screenshot](demo.PNG)
-
----
-
-## requirements.txt
-
-```
-streamlit
-pydeck
-pandas
-matplotlib
-numpy
-```
-
----
-
-> Feedback and PRs welcome!  
-> © 2025 Borusan Digital Transformation (Demo App)
-
-
+**Questions or feature requests?**  
+Open an issue or [try the live demo!](https://traffic-map-daglar510.streamlit.app/)
