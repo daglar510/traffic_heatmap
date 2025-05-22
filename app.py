@@ -32,7 +32,7 @@ max_bar_height = st.slider(
 color_sharpness = st.slider(
     "Color sharpness / density boost",
     min_value=0.05,
-    max_value=20.00,
+    max_value=2.00,
     value=0.20,
     step=0.01,
 )
