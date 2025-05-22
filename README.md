@@ -1,8 +1,3 @@
-Absolutely, here’s a **full copy-paste ready README.md** for your GitHub repo, from start to finish, **fully formatted as a code block**.
-
----
-
-```markdown
 # Tractor Traffic Heatmap – CSV to 3D Density Visualization
 
 **Turn massive GPS datasets into interactive 3D heatmaps in seconds.**  
@@ -139,9 +134,5 @@ numpy
 
 > Feedback and PRs welcome!  
 > © 2025 Borusan Digital Transformation (Demo App)
-```
 
----
 
-Just **copy-paste this whole block** as your `README.md`.  
-Let me know if you want extra sections (FAQ, contributing, etc.) or a Turkish version.
