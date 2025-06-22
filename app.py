@@ -91,6 +91,7 @@ else:
     heatmap_df['color'] = [[0, 255, 0, 180]]
 
 #   Carto styles
+# --- Basemap selector ---------------------------------------------------------
 basemap_choice = st.selectbox(
     "Basemap style",
     options=[
@@ -102,11 +103,10 @@ basemap_choice = st.selectbox(
     index=0
 )
 
-# Build the satellite TileLayer only if that option is chosen
-layers = []
-
+layers = []          # we’ll collect all layers here
 
 if basemap_choice.startswith("Satellite"):
+    # free ESRI World Imagery tiles – no token required
     satellite_tiles = (
         "https://server.arcgisonline.com/ArcGIS/rest/services/"
         "World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -120,48 +120,49 @@ if basemap_choice.startswith("Satellite"):
         id="esri_world_imagery",
     )
     layers.append(basemap_layer)
-    deck_map_style = None   # tell Pydeck *not* to add its own Mapbox layer
+    deck_map_style = None          # disable default Mapbox layer
 else:
-    # Carto basemap styles
+    # built-in Carto basemaps (also token-free)
     style_lookup = {"Light": "light", "Dark": "dark", "Road": "road"}
     deck_map_style = style_lookup[basemap_choice]
 
-# --- Pydeck Layer
-layer = pdk.Layer(
+# --- 3-D bar layer ------------------------------------------------------------
+bar_layer = pdk.Layer(
     "ColumnLayer",
     data=heatmap_df,
     get_position='[lon, lat]',
     get_elevation="count",
-    elevation_scale=max_bar_height / (max_density if max_density > 0 else 1),
+    elevation_scale=max_bar_height / (max_density or 1),
     elevation_range=[0, max_bar_height],
-    radius=grid_size / 2,  # "radius" is half the grid cell, so bars don't overlap
+    radius=grid_size / 2,
     get_fill_color="color",
     pickable=True,
     auto_highlight=True,
     extruded=True,
+    id="density_bars",
 )
+layers.append(bar_layer)            # add the bars on top of the basemap
 
-view_state = pdk.ViewState(
-    latitude=df["Lat"].mean(),
-    longitude=df["Lon"].mean(),
-    zoom=17,
-    bearing=0,
-    pitch=45,
-)
-
-tooltip = {
-    "html": "Lat/Lon: [{lat:.5f}, {lon:.5f}]<br>Points: <b>{count}</b>",
-    "style": {"backgroundColor": "black", "color": "white"},
-}
-
+# --- Deck ---------------------------------------------------------------------
 r = pdk.Deck(
-    layers=[layer],
-    initial_view_state=view_state,
-    map_style=basemap,     
-    tooltip=tooltip,
+    layers=layers,
+    initial_view_state=pdk.ViewState(
+        latitude=df["Lat"].mean(),
+        longitude=df["Lon"].mean(),
+        zoom=17,
+        bearing=0,
+        pitch=45,
+    ),
+    map_style=deck_map_style,       # <- correct variable name
+    tooltip={
+        "html": "Lat/Lon: [{lat:.5f}, {lon:.5f}]<br>Points: <b>{count}</b>",
+        "style": {"backgroundColor": "black", "color": "white"},
+    },
+    controller=True,
 )
 
 st.pydeck_chart(r, use_container_width=True)
+
 
 # --- Colorbar legend using st.pyplot
 fig, ax = plt.subplots(figsize=(5, 0.7))
