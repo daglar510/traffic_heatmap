@@ -92,7 +92,7 @@ else:
 
 #   Carto styles
 basemap = st.selectbox(
-    "Basemap style ,
+    "Basemap style" ,
     options=["light", "dark", "road"],
     index=0
 )
