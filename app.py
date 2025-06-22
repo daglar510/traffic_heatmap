@@ -91,11 +91,41 @@ else:
     heatmap_df['color'] = [[0, 255, 0, 180]]
 
 #   Carto styles
-basemap = st.selectbox(
-    "Basemap style" ,
-    options=["light", "dark", "road"],
+basemap_choice = st.selectbox(
+    "Basemap style",
+    options=[
+        "Satellite (ESRI World Imagery)",
+        "Light",     # Carto Light
+        "Dark",      # Carto Dark
+        "Road"       # Carto Positron/Road
+    ],
     index=0
 )
+
+# Build the satellite TileLayer only if that option is chosen
+layers = []
+
+
+if basemap_choice.startswith("Satellite"):
+    satellite_tiles = (
+        "https://server.arcgisonline.com/ArcGIS/rest/services/"
+        "World_Imagery/MapServer/tile/{z}/{y}/{x}"
+    )
+    basemap_layer = pdk.Layer(
+        "TileLayer",
+        data=satellite_tiles,
+        min_zoom=0,
+        max_zoom=19,
+        tile_size=256,
+        id="esri_world_imagery",
+    )
+    layers.append(basemap_layer)
+    deck_map_style = None   # tell Pydeck *not* to add its own Mapbox layer
+else:
+    # Carto basemap styles
+    style_lookup = {"Light": "light", "Dark": "dark", "Road": "road"}
+    deck_map_style = style_lookup[basemap_choice]
+
 # --- Pydeck Layer
 layer = pdk.Layer(
     "ColumnLayer",
