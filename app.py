@@ -90,6 +90,12 @@ else:
     heatmap_df['rel_density'] = 0
     heatmap_df['color'] = [[0, 255, 0, 180]]
 
+#   Carto styles
+basemap = st.selectbox(
+    "Basemap style (no token needed)",
+    options=["light", "dark", "road"],
+    index=0
+)
 # --- Pydeck Layer
 layer = pdk.Layer(
     "ColumnLayer",
@@ -114,17 +120,14 @@ view_state = pdk.ViewState(
 )
 
 tooltip = {
-    "html": (
-        "Lat/Lon: [{lat:.5f}, {lon:.5f}]<br>"
-        "Points: <b>{count}</b>"
-    ),
+    "html": "Lat/Lon: [{lat:.5f}, {lon:.5f}]<br>Points: <b>{count}</b>",
     "style": {"backgroundColor": "black", "color": "white"},
 }
 
 r = pdk.Deck(
     layers=[layer],
     initial_view_state=view_state,
-    map_style="mapbox://styles/mapbox/satellite-v9",
+    map_style=basemap,     
     tooltip=tooltip,
 )
 
