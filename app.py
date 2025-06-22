@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="Tractor Traffic Heatmap", layout="wide")
 st.title("Tractor Movement Heatmap (April 2025)")
 st.write(
-    "Fine-grained heatmap (0.5m–10m). Colors show density: Green (low) → Yellow → Red (high). "
+    "Fine‑grained heatmap (0.5 m – 10 m). Colors show density: Green (low) → Yellow → Red (high). "
     "Color scaling adapts to data for strong visible contrast. "
     "Adjust all sliders for detail, bar height, and color mapping."
 )
@@ -22,7 +22,7 @@ def load_data():
 
 df = load_data()
 
-# --- Sliders
+# --- UI sliders --------------------------------------------------------------
 grid_size = st.slider(
     "Grid cell size (meters)", min_value=0.50, max_value=10.00, value=2.00, step=0.10
 )
@@ -37,113 +37,103 @@ color_sharpness = st.slider(
     step=0.01,
 )
 
-# --- Binning into grid
+# --- Binning GPS points into a grid -----------------------------------------
 deg_per_meter = 1 / 111_000
 lat_bin_width = grid_size * deg_per_meter
 lon_bin_width = grid_size * deg_per_meter / np.cos(np.deg2rad(df["Lat"].mean()))
 lat_bins = np.arange(df["Lat"].min(), df["Lat"].max() + lat_bin_width, lat_bin_width)
 lon_bins = np.arange(df["Lon"].min(), df["Lon"].max() + lon_bin_width, lon_bin_width)
-df['lat_bin'] = pd.cut(df['Lat'], bins=lat_bins, labels=False, include_lowest=True)
-df['lon_bin'] = pd.cut(df['Lon'], bins=lon_bins, labels=False, include_lowest=True)
-binned = df.groupby(['lat_bin', 'lon_bin']).size().reset_index(name='count')
-binned = binned.dropna()
 
-# --- Build grid DataFrame for pydeck
-heatmap_data = []
-for _, row in binned.iterrows():
-    i, j, count = int(row['lat_bin']), int(row['lon_bin']), int(row['count'])
-    lat_c = (lat_bins[i] + lat_bins[i+1]) / 2
-    lon_c = (lon_bins[j] + lon_bins[j+1]) / 2
-    heatmap_data.append({
-        "lat": lat_c,
-        "lon": lon_c,
-        "count": count
-    })
-heatmap_df = pd.DataFrame(heatmap_data)
+df["lat_bin"] = pd.cut(df["Lat"], bins=lat_bins, labels=False, include_lowest=True)
+df["lon_bin"] = pd.cut(df["Lon"], bins=lon_bins, labels=False, include_lowest=True)
 
-if not heatmap_df.empty:
-    min_density = int(heatmap_df['count'].min())
-    max_density = int(heatmap_df['count'].max())
-else:
-    min_density = 1
-    max_density = 1
-
-# --- Color normalization for green→yellow→red
-from matplotlib.colors import LinearSegmentedColormap
-gyred = LinearSegmentedColormap.from_list("gyred", [
-    (0.00, "#00FF00"),  # Green
-    (0.50, "#FFFF00"),  # Yellow
-    (1.00, "#FF0000"),  # Red
-])
-
-# Apply color sharpness: density normalization/exponentiation
-if not heatmap_df.empty and max_density > 0:
-    heatmap_df['rel_density'] = (
-        (heatmap_df['count'] - min_density) / (max_density - min_density + 1e-8)
-    ) ** color_sharpness
-    heatmap_df['rel_density'] = heatmap_df['rel_density'].clip(0, 1)
-    # Map normalized to rgba (0..255, alpha 180)
-    heatmap_df['color'] = heatmap_df['rel_density'].apply(
-        lambda x: [int(255*y) for y in gyred(x)[:3]] + [180]
-    )
-else:
-    heatmap_df['rel_density'] = 0
-    heatmap_df['color'] = [[0, 255, 0, 180]]
-
-#   Carto styles
-# --- Basemap selector ---------------------------------------------------------
-basemap_choice = st.selectbox(
-    "Basemap style",
-    options=[
-        "Satellite (ESRI World Imagery)",
-        "Light",     # Carto Light
-        "Dark",      # Carto Dark
-        "Road"       # Carto Positron/Road
-    ],
-    index=0
+binned = (
+    df.groupby(["lat_bin", "lon_bin"]).size().reset_index(name="count").dropna()
 )
 
-layers = []          # we’ll collect all layers here
+# --- Build grid DataFrame for pydeck ----------------------------------------
+heatmap_data = []
+for _, row in binned.iterrows():
+    i, j, count = int(row["lat_bin"]), int(row["lon_bin"]), int(row["count"])
+    lat_c = (lat_bins[i] + lat_bins[i + 1]) / 2
+    lon_c = (lon_bins[j] + lon_bins[j + 1]) / 2
+    heatmap_data.append({"lat": lat_c, "lon": lon_c, "count": count})
+heatmap_df = pd.DataFrame(heatmap_data)
+
+min_density = int(heatmap_df["count"].min()) if not heatmap_df.empty else 1
+max_density = int(heatmap_df["count"].max()) if not heatmap_df.empty else 1
+
+# --- Color mapping (green → yellow → red) ------------------------------------
+from matplotlib.colors import LinearSegmentedColormap
+
+gyred = LinearSegmentedColormap.from_list(
+    "gyred", [(0.00, "#00FF00"), (0.50, "#FFFF00"), (1.00, "#FF0000")]
+)
+
+if not heatmap_df.empty and max_density > 0:
+    heatmap_df["rel_density"] = (
+        (heatmap_df["count"] - min_density) / (max_density - min_density + 1e-8)
+    ) ** color_sharpness
+    heatmap_df["rel_density"] = heatmap_df["rel_density"].clip(0, 1)
+    heatmap_df["color"] = heatmap_df["rel_density"].apply(
+        lambda x: [int(255 * y) for y in gyred(x)[:3]] + [180]
+    )
+else:
+    heatmap_df["color"] = [[0, 255, 0, 180]]
+
+# --- Basemap selector --------------------------------------------------------
+basemap_choice = st.selectbox(
+    "Basemap style (token‑free)",
+    [
+        "Satellite (ESRI World Imagery)",
+        "Light",  # Carto Light
+        "Dark",   # Carto Dark
+        "Road",   # Carto Positron/Road
+    ],
+    index=0,
+)
+
+layers = []
 
 if basemap_choice.startswith("Satellite"):
-    # free ESRI World Imagery tiles – no token required
+    # ESRI World Imagery — no key required
     satellite_tiles = (
         "https://server.arcgisonline.com/ArcGIS/rest/services/"
         "World_Imagery/MapServer/tile/{z}/{y}/{x}"
     )
-    basemap_layer = pdk.Layer(
-        "TileLayer",
-        data=satellite_tiles,
-        min_zoom=0,
-        max_zoom=19,
-        tile_size=256,
-        id="esri_world_imagery",
+    layers.append(
+        pdk.Layer(
+            "TileLayer",
+            data=satellite_tiles,
+            min_zoom=0,
+            max_zoom=19,
+            tile_size=256,
+            id="esri_world_imagery",
+        )
     )
-    layers.append(basemap_layer)
-    deck_map_style = None          # disable default Mapbox layer
+    deck_map_style = None  # suppress default Mapbox base layer
 else:
-    # built-in Carto basemaps (also token-free)
-    style_lookup = {"Light": "light", "Dark": "dark", "Road": "road"}
-    deck_map_style = style_lookup[basemap_choice]
+    deck_map_style = {"Light": "light", "Dark": "dark", "Road": "road"}[basemap_choice]
 
-# --- 3-D bar layer ------------------------------------------------------------
-bar_layer = pdk.Layer(
-    "ColumnLayer",
-    data=heatmap_df,
-    get_position='[lon, lat]',
-    get_elevation="count",
-    elevation_scale=max_bar_height / (max_density or 1),
-    elevation_range=[0, max_bar_height],
-    radius=grid_size / 2,
-    get_fill_color="color",
-    pickable=True,
-    auto_highlight=True,
-    extruded=True,
-    id="density_bars",
+# --- Density column layer ----------------------------------------------------
+layers.append(
+    pdk.Layer(
+        "ColumnLayer",
+        data=heatmap_df,
+        get_position="[lon, lat]",
+        get_elevation="count",
+        elevation_scale=max_bar_height / (max_density or 1),
+        elevation_range=[0, max_bar_height],
+        radius=grid_size / 2,
+        get_fill_color="color",
+        pickable=True,
+        auto_highlight=True,
+        extruded=True,
+        id="density_bars",
+    )
 )
-layers.append(bar_layer)            # add the bars on top of the basemap
 
-# --- Deck ---------------------------------------------------------------------
+# --- Render deck -------------------------------------------------------------
 r = pdk.Deck(
     layers=layers,
     initial_view_state=pdk.ViewState(
@@ -153,23 +143,19 @@ r = pdk.Deck(
         bearing=0,
         pitch=45,
     ),
-    map_style=deck_map_style,       # <- correct variable name
+    map_style=deck_map_style,
     tooltip={
         "html": "Lat/Lon: [{lat:.5f}, {lon:.5f}]<br>Points: <b>{count}</b>",
         "style": {"backgroundColor": "black", "color": "white"},
     },
-    controller=True,
 )
 
 st.pydeck_chart(r, use_container_width=True)
 
-
-# --- Colorbar legend using st.pyplot
+# --- Colorbar legend ---------------------------------------------------------
 fig, ax = plt.subplots(figsize=(5, 0.7))
 norm = matplotlib.colors.Normalize(vmin=min_density, vmax=max_density)
-cb = matplotlib.colorbar.ColorbarBase(
-    ax, cmap=gyred, orientation='horizontal', norm=norm
-)
+cb = matplotlib.colorbar.ColorbarBase(ax, cmap=gyred, orientation="horizontal", norm=norm)
 cb.set_label(f"Min/Max: Green cell = {min_density} points, Red = {max_density} points.")
 plt.tight_layout()
 st.pyplot(fig)
